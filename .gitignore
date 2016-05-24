@@ -78,7 +78,6 @@ crashlytics-build.properties
 
 # Node.js
 node_modules/
-package.json
 
 tests/_output/*
 vendor/
