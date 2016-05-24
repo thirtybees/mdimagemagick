@@ -24,7 +24,8 @@ module.exports = function(grunt) {
                     {src: 'index.php', dest: 'mdimagemagick/'},
                     {src: 'mdimagemagick.php', dest: 'mdimagemagick/'},
                     {src: 'logo.png', dest: 'mdimagemagick/'},
-                    {src: 'logo.gif', dest: 'mdimagemagick/'}
+                    {src: 'logo.gif', dest: 'mdimagemagick/'},
+                    {src: 'LICENSE', dest: 'mdimagemagick/'}
                 ]
             }
         }
