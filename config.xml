@@ -2,7 +2,7 @@
 <module>
 	<name>mdimagemagick</name>
 	<displayName><![CDATA[ImageMagick]]></displayName>
-	<version><![CDATA[1.0.0]]></version>
+	<version><![CDATA[1.1.0]]></version>
 	<description><![CDATA[Add ImageMagick support to PrestaShop]]></description>
 	<author><![CDATA[Michael Dekker]]></author>
 	<tab><![CDATA[administration]]></tab>

@@ -30,6 +30,18 @@ class ImageManager extends ImageManagerCore
         if (!class_exists('MDImageMagick')) {
             require_once _PS_MODULE_DIR_.'mdimagemagick/mdimagemagick.php';
         }
+
+        if (Configuration::get(MDImageMagick::ORIGINAL_COPY)) {
+            // Check if we should just copy the file instead
+            $relative_dst_file = str_replace(_PS_IMG_DIR_, '', $dst_file);
+            $dst_file_only = end(explode(DIRECTORY_SEPARATOR, $relative_dst_file));
+            list($filename, $extension) = explode('.', $dst_file_only);
+
+            if (is_numeric($filename) && preg_match('/^(c|p|m|su|st)'.preg_quote('/'.implode('/', str_split($filename)).'/'.$filename.'.'.$extension, '/').'$/', $relative_dst_file)) {
+                return @copy($src_file, $dst_file);
+            }
+        }
+
         $imagick_enabled = (bool)Configuration::get(MDImageMagick::IMAGICK_ENABLED);
         if ($imagick_enabled && !extension_loaded('imagick')) {
             Db::getInstance()->update('configuration', array('name' => MDImageMagick::IMAGICK_ENABLED, 'value' => false), 'name = \''.MDImageMagick::IMAGICK_ENABLED.'\'');
@@ -201,7 +213,7 @@ class ImageManager extends ImageManagerCore
             if ($dst_height > $src_image->getImageHeight()) {
                 $src_image->extentImage($src_image->getImageWidth(), $dst_height, 0, -(($dst_height - $src_image->getImageHeight()) / 2));
             }
-            // And then the width, if necessary
+            // ...and then the width, if necessary
             if ($dst_width > $src_image->getImageWidth()) {
                 $src_image->extentImage($dst_width, $src_image->getImageHeight(), -(($dst_width - $src_image->getImageWidth()) / 2), 0);
             }

@@ -17,12 +17,18 @@
  *  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
  */
 
-header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
-header('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT');
+function upgrade_module_1_1_0($module)
+{
+    /** @var MDImageMagick $module */
+    $module->removeOverride('AdminProductsController');
+    $module->removeOverride('ImageManager');
 
-header('Cache-Control: no-store, no-cache, must-revalidate');
-header('Cache-Control: post-check=0, pre-check=0', false);
-header('Pragma: no-cache');
+    // For those who love to upload modules through FTP
+    @unlink(_PS_MODULE_DIR_.$module->name.'/override/controllers/admin/AdminProductsController.php');
+    @unlink(_PS_MODULE_DIR_.$module->name.'/override/controllers/admin/index.php');
+    @rmdir(_PS_MODULE_DIR_.$module->name.'/override/controllers/admin');
+    @unlink(_PS_MODULE_DIR_.$module->name.'/override/controllers/index.php');
+    @rmdir(_PS_MODULE_DIR_.$module->name.'/override/controllers');
 
-header('Location: ../');
-exit;
+    return $module->installOverrides();
+}
