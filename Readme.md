@@ -14,7 +14,7 @@ To install the PHP extension, issue the command:
 Unfortunately, the version of ImageMagick that is bundled with Ubuntu is vulnerable: https://imagetragick.com/  
 In order to install a safe version on production, we will have to compile it from source.
 First, make sure you have the necessary tools to build:
-`apt-get install build-essential git 
+`apt-get install build-essential git`
  
 Then download the source with git:
 `git clone https://github.com/ImageMagick/ImageMagick`
@@ -24,7 +24,7 @@ Change directory:
  
 Configure:
 `./configure`
-(This step might show some missing dependencies, try to locate the Ubuntu package and install with apt-get).
+(This step might show some missing dependencies, try to locate the Ubuntu package and install with `apt-get`).
  
 Install:
 `make && sudo make install`
