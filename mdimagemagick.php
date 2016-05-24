@@ -483,7 +483,7 @@ class MDImageMagick extends Module
         }
         $imagick_filter = (int)Tools::getValue(self::IMAGICK_FILTER);
         $imagick_strip_icc_profile = (bool)Tools::getValue(self::IMAGICK_STRIP_ICC_PROFILE);
-        $imagick_png_data_encoding = (bool)Tools::getValue(self::IMAGICK_PNG_DATA_ENCODING);
+        $imagick_png_data_encoding = (int)Tools::getValue(self::IMAGICK_PNG_DATA_ENCODING);
         $original_copy = (bool)Tools::getValue(self::ORIGINAL_COPY);
 
         if (Configuration::get('PS_MULTISHOP_FEATURE_ACTIVE')) {
@@ -497,31 +497,68 @@ class MDImageMagick extends Module
                 $this->updateAllValue(self::IMAGICK_STRIP_ICC_PROFILE, $imagick_strip_icc_profile);
                 $this->updateAllValue(self::IMAGICK_PNG_DATA_ENCODING, $imagick_png_data_encoding);
                 $this->updateAllValue(self::ORIGINAL_COPY, $original_copy);
-            } elseif (Tools::getValue('multishopOverrideOption')) {
+            } elseif (is_array(Tools::getValue('multishopOverrideOption'))) {
                 $id_shop_group = (int)Shop::getGroupFromShop($this->getShopId(), true);
+                $multishop_override = Tools::getValue('multishopOverrideOption');
                 if (Shop::getContext() == Shop::CONTEXT_GROUP) {
                     foreach (Shop::getShops(false, $this->getShopId()) as $id_shop) {
-                        Configuration::updateValue(self::IMAGICK_ENABLED, $imagick_enabled, false, $id_shop_group, $id_shop);
-                        Configuration::updateValue(self::IMAGICK_PROGRESSIVE_JPEG, $imagick_progressive_jpg, false, $id_shop_group, $id_shop);
-                        Configuration::updateValue(self::IMAGICK_TRIM_WHITESPACE, $imagick_trim_whitespace, false, $id_shop_group, $id_shop);
-                        Configuration::updateValue(self::IMAGICK_FUZZ, $imagick_fuzz, false, $id_shop_group, $id_shop);
-                        Configuration::updateValue(self::IMAGICK_BLUR, $imagick_blur, false, $id_shop_group, $id_shop);
-                        Configuration::updateValue(self::IMAGICK_FILTER, $imagick_filter, false, $id_shop_group, $id_shop);
-                        Configuration::updateValue(self::IMAGICK_STRIP_ICC_PROFILE, $imagick_strip_icc_profile, false, $id_shop_group, $id_shop);
-                        Configuration::updateValue(self::IMAGICK_PNG_DATA_ENCODING, $imagick_png_data_encoding, false, $id_shop_group, $id_shop);
-                        Configuration::updateValue(self::ORIGINAL_COPY, $original_copy, false, $id_shop_group, $id_shop);
+                        if ($multishop_override[self::IMAGICK_ENABLED]) {
+                            Configuration::updateValue(self::IMAGICK_ENABLED, $imagick_enabled, false, $id_shop_group, $id_shop);
+                        }
+                        if ($multishop_override[self::IMAGICK_PROGRESSIVE_JPEG]) {
+                            Configuration::updateValue(self::IMAGICK_PROGRESSIVE_JPEG, $imagick_progressive_jpg, false, $id_shop_group, $id_shop);
+                        }
+                        if ($multishop_override[self::IMAGICK_TRIM_WHITESPACE]) {
+                            Configuration::updateValue(self::IMAGICK_TRIM_WHITESPACE, $imagick_trim_whitespace, false, $id_shop_group, $id_shop);
+                        }
+                        if ($multishop_override[self::IMAGICK_FUZZ]) {
+                            Configuration::updateValue(self::IMAGICK_FUZZ, $imagick_fuzz, false, $id_shop_group, $id_shop);
+                        }
+                        if ($multishop_override[self::IMAGICK_BLUR]) {
+                            Configuration::updateValue(self::IMAGICK_BLUR, $imagick_blur, false, $id_shop_group, $id_shop);
+                        }
+                        if ($multishop_override[self::IMAGICK_FILTER]) {
+                            Configuration::updateValue(self::IMAGICK_FILTER, $imagick_filter, false, $id_shop_group, $id_shop);
+                        }
+                        if ($multishop_override[self::IMAGICK_STRIP_ICC_PROFILE]) {
+                            Configuration::updateValue(self::IMAGICK_STRIP_ICC_PROFILE, $imagick_strip_icc_profile, false, $id_shop_group, $id_shop);
+                        }
+                        if ($multishop_override[self::IMAGICK_PNG_DATA_ENCODING]) {
+                            Configuration::updateValue(self::IMAGICK_PNG_DATA_ENCODING, $imagick_png_data_encoding, false, $id_shop_group, $id_shop);
+                        }
+                        if ($multishop_override[self::ORIGINAL_COPY]) {
+                            Configuration::updateValue(self::ORIGINAL_COPY, $original_copy, false, $id_shop_group, $id_shop);
+                        }
                     }
                 } else {
                     $id_shop = (int)$this->getShopId();
-                    Configuration::updateValue(self::IMAGICK_ENABLED, $imagick_enabled, false, $id_shop_group, $id_shop);
-                    Configuration::updateValue(self::IMAGICK_PROGRESSIVE_JPEG, $imagick_progressive_jpg, false, $id_shop_group, $id_shop);
-                    Configuration::updateValue(self::IMAGICK_TRIM_WHITESPACE, $imagick_trim_whitespace, false, $id_shop_group, $id_shop);
-                    Configuration::updateValue(self::IMAGICK_FUZZ, $imagick_fuzz, false, $id_shop_group, $id_shop);
-                    Configuration::updateValue(self::IMAGICK_BLUR, $imagick_blur, false, $id_shop_group, $id_shop);
-                    Configuration::updateValue(self::IMAGICK_FILTER, $imagick_filter, false, $id_shop_group, $id_shop);
-                    Configuration::updateValue(self::IMAGICK_STRIP_ICC_PROFILE, $imagick_strip_icc_profile, false, $id_shop_group, $id_shop);
-                    Configuration::updateValue(self::IMAGICK_PNG_DATA_ENCODING, $imagick_png_data_encoding, false, $id_shop_group, $id_shop);
-                    Configuration::updateValue(self::ORIGINAL_COPY, $original_copy, false, $id_shop_group, $id_shop);
+                    if ($multishop_override[self::IMAGICK_ENABLED]) {
+                        Configuration::updateValue(self::IMAGICK_ENABLED, $imagick_enabled, false, $id_shop_group, $id_shop);
+                    }
+                    if ($multishop_override[self::IMAGICK_PROGRESSIVE_JPEG]) {
+                        Configuration::updateValue(self::IMAGICK_PROGRESSIVE_JPEG, $imagick_progressive_jpg, false, $id_shop_group, $id_shop);
+                    }
+                    if ($multishop_override[self::IMAGICK_TRIM_WHITESPACE]) {
+                        Configuration::updateValue(self::IMAGICK_TRIM_WHITESPACE, $imagick_trim_whitespace, false, $id_shop_group, $id_shop);
+                    }
+                    if ($multishop_override[self::IMAGICK_FUZZ]) {
+                        Configuration::updateValue(self::IMAGICK_FUZZ, $imagick_fuzz, false, $id_shop_group, $id_shop);
+                    }
+                    if ($multishop_override[self::IMAGICK_BLUR]) {
+                        Configuration::updateValue(self::IMAGICK_BLUR, $imagick_blur, false, $id_shop_group, $id_shop);
+                    }
+                    if ($multishop_override[self::IMAGICK_FILTER]) {
+                        Configuration::updateValue(self::IMAGICK_FILTER, $imagick_filter, false, $id_shop_group, $id_shop);
+                    }
+                    if ($multishop_override[self::IMAGICK_STRIP_ICC_PROFILE]) {
+                        Configuration::updateValue(self::IMAGICK_STRIP_ICC_PROFILE, $imagick_strip_icc_profile, false, $id_shop_group, $id_shop);
+                    }
+                    if ($multishop_override[self::IMAGICK_PNG_DATA_ENCODING]) {
+                        Configuration::updateValue(self::IMAGICK_PNG_DATA_ENCODING, $imagick_png_data_encoding, false, $id_shop_group, $id_shop);
+                    }
+                    if ($multishop_override[self::ORIGINAL_COPY]) {
+                        Configuration::updateValue(self::ORIGINAL_COPY, $original_copy, false, $id_shop_group, $id_shop);
+                    }
                 }
             }
         } else {
