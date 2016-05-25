@@ -37,7 +37,7 @@ class ImageManager extends ImageManagerCore
             $dst_file_only = end(explode(DIRECTORY_SEPARATOR, $relative_dst_file));
             list($filename, $extension) = explode('.', $dst_file_only);
 
-            if (is_numeric($filename) && preg_match('/^(c|p|m|su|st)'.preg_quote('/'.implode('/', str_split($filename)).'/'.$filename.'.'.$extension, '/').'$/', $relative_dst_file)) {
+            if (is_numeric($filename) && preg_match('/^(c|p|m|su|st)'.preg_quote(DIRECTORY_SEPARATOR.implode(DIRECTORY_SEPARATOR, str_split($filename)).DIRECTORY_SEPARATOR.$filename.'.'.$extension, '/').'$/', $relative_dst_file)) {
                 return @copy($src_file, $dst_file);
             }
         }
