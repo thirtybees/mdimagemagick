@@ -19,22 +19,64 @@
 
 class ImageManager extends ImageManagerCore
 {
+    public static function thumbnail($image, $cache_image, $size, $image_type = 'jpg', $disable_cache = true, $regenerate = false)
+    {
+        if (!self::isModuleEnabled() || !self::isImagickEnabled()) {
+            return parent::thumbnail($image, $cache_image, $size, $image_type, $disable_cache, $regenerate);
+        }
+
+        self::statCacheClear($image);
+
+        if (!file_exists($image)) {
+            return '';
+        }
+
+        if ($regenerate && file_exists(_PS_TMP_IMG_DIR_.$cache_image)) {
+            @unlink(_PS_TMP_IMG_DIR_.$cache_image);
+        }
+
+        if ($regenerate || !file_exists(_PS_TMP_IMG_DIR_.$cache_image)) {
+            if (!parent::checkImageMemoryLimit($image)) {
+                return '';
+            }
+
+            $src_image = new Imagick($image);
+            self::trimImage($src_image);
+            $x = $src_image->getImageWidth();
+            $y = $src_image->getImageHeight();
+
+            $max_x = $size * 3;
+            $ratio_x = $x / ($y / $size);
+            if ($ratio_x > $max_x) {
+                $ratio_x = $max_x;
+                $size = $y / ($x / $max_x);
+            }
+
+            self::resize2($image, _PS_TMP_IMG_DIR_.$cache_image, $src_image, $ratio_x, $size, $image_type);
+        }
+
+        // Relative link will always work, whatever the base uri set in the admin
+        if (Context::getContext()->controller->controller_type == 'admin') {
+            return '<img src="../img/tmp/'.$cache_image.($disable_cache ? '?time='.time() : '').'" alt="" class="imgm img-thumbnail" />';
+        } else {
+            return '<img src="'._PS_TMP_IMG_.$cache_image.($disable_cache ? '?time='.time() : '').'" alt="" class="imgm img-thumbnail" />';
+        }
+    }
+
     public static function resize($src_file, $dst_file, $dst_width = null, $dst_height = null, $file_type = 'jpg',
         $force_type = false, &$error = 0, &$tgt_width = null, &$tgt_height = null, $quality = 5,
         &$src_width = null, &$src_height = null)
     {
-        if (!Module::isEnabled('mdimagemagick')) {
+        if (!self::isModuleEnabled()) {
             return parent::resize($src_file, $dst_file, $dst_width, $dst_height, $file_type,
                 $force_type, $error, $tgt_width , $tgt_height, $quality, $src_width, $src_height);
-        }
-        if (!class_exists('MDImageMagick')) {
-            require_once _PS_MODULE_DIR_.'mdimagemagick/mdimagemagick.php';
         }
 
         if (Configuration::get(MDImageMagick::ORIGINAL_COPY)) {
             // Check if we should just copy the file instead
             $relative_dst_file = str_replace(_PS_IMG_DIR_, '', $dst_file);
-            $dst_file_only = end(explode(DIRECTORY_SEPARATOR, $relative_dst_file));
+            $relative_dst_parts = explode(DIRECTORY_SEPARATOR, $relative_dst_file);
+            $dst_file_only = end($relative_dst_parts);
             list($filename, $extension) = explode('.', $dst_file_only);
 
             if (is_numeric($filename) && preg_match('/^(c|p|m|su|st)'.preg_quote(DIRECTORY_SEPARATOR.implode(DIRECTORY_SEPARATOR, str_split($filename)).DIRECTORY_SEPARATOR.$filename.'.'.$extension, '/').'$/', $relative_dst_file)) {
@@ -42,217 +84,160 @@ class ImageManager extends ImageManagerCore
             }
         }
 
-        $imagick_enabled = (bool)Configuration::get(MDImageMagick::IMAGICK_ENABLED);
-        if ($imagick_enabled && !extension_loaded('imagick')) {
-            Db::getInstance()->update('configuration', array('name' => MDImageMagick::IMAGICK_ENABLED, 'value' => false), 'name = \''.MDImageMagick::IMAGICK_ENABLED.'\'');
-            $imagick_enabled = false;
+        if (!self::isImagickEnabled()) {
+            return parent::resize($src_file, $dst_file, $dst_width, $dst_height, $file_type,
+                $force_type, $error, $tgt_width , $tgt_height, $quality, $src_width, $src_height);
         }
 
-        if (PHP_VERSION_ID < 50300) {
-            clearstatcache();
-        } else {
-            clearstatcache(true, $src_file);
-        }
+        self::statCacheClear($src_file);
 
         if (!file_exists($src_file) || !filesize($src_file)) {
             return !($error = self::ERROR_FILE_NOT_EXIST);
         }
 
-        list($tmp_width, $tmp_height, $type) = getimagesize($src_file);
-        $rotate = 0;
-        if (function_exists('exif_read_data') && function_exists('mb_strtolower')) {
-            $exif = @exif_read_data($src_file);
-
-            if ($exif && isset($exif['Orientation'])) {
-                switch ($exif['Orientation']) {
-                    case 3:
-                        $src_width = $tmp_width;
-                        $src_height = $tmp_height;
-                        $rotate = 180;
-                        break;
-
-                    case 6:
-                        $src_width = $tmp_height;
-                        $src_height = $tmp_width;
-                        $rotate = -90;
-                        break;
-
-                    case 8:
-                        $src_width = $tmp_height;
-                        $src_height = $tmp_width;
-                        $rotate = 90;
-                        break;
-
-                    default:
-                        $src_width = $tmp_width;
-                        $src_height = $tmp_height;
-                }
-            } else {
-                $src_width = $tmp_width;
-                $src_height = $tmp_height;
-            }
-        } else {
-            $src_width = $tmp_width;
-            $src_height = $tmp_height;
-        }
-
-        // If PS_IMAGE_QUALITY is activated, the generated image will be a PNG with .jpg as a file extension.
-        // This allow for higher quality and for transparency. JPG source files will also benefit from a higher quality
-        // because JPG reencoding by GD, even with max quality setting, degrades the image.
-        if (Configuration::get('PS_IMAGE_QUALITY') == 'png_all'
-            || (Configuration::get('PS_IMAGE_QUALITY') == 'png' && $type == IMAGETYPE_PNG) && !$force_type) {
-            $file_type = 'png';
-        }
-
-        if (!$src_width) {
-            return !($error = self::ERROR_FILE_WIDTH);
-        }
-        if (!$dst_width) {
-            $dst_width = $src_width;
-        }
-        if (!$dst_height) {
-            $dst_height = $src_height;
-        }
-
-        $width_diff = $dst_width / $src_width;
-        $height_diff = $dst_height / $src_height;
-
-        $ps_image_generation_method = Configuration::get('PS_IMAGE_GENERATION_METHOD');
-        if ($width_diff > 1 && $height_diff > 1) {
-            $next_width = $src_width;
-            $next_height = $src_height;
-        } else {
-            if ($ps_image_generation_method == 2 || (!$ps_image_generation_method && $width_diff > $height_diff)) {
-                $next_height = $dst_height;
-                $next_width = round(($src_width * $next_height) / $src_height);
-                $dst_width = (int)(!$ps_image_generation_method ? $dst_width : $next_width);
-            } else {
-                $next_width = $dst_width;
-                $next_height = round($src_height * $dst_width / $src_width);
-                $dst_height = (int)(!$ps_image_generation_method ? $dst_height : $next_height);
-            }
-        }
-
-        if (!ImageManager::checkImageMemoryLimit($src_file)) {
+        if (!parent::checkImageMemoryLimit($src_file)) {
             return !($error = self::ERROR_MEMORY_LIMIT);
         }
 
-        if ($imagick_enabled) {
-            $src_image = new Imagick();
-            $src_image->readImage($src_file);
-            if ($file_type == 'png') {
-                // PNG is basically no more than lossless gzip
-                $src_image->setImageCompression(Imagick::COMPRESSION_LZW);
-                $src_image->setImageFormat('png');
-                $src_image->setImageCompressionQuality((int)Configuration::get('PS_PNG_QUALITY') * 10 + (int)Configuration::get(MDImageMagick::IMAGICK_PNG_DATA_ENCODING));
-                $dest_type_file = 'png:'.$dst_file;
+        $src_image = new Imagick($src_file);
+        $src_width = $src_image->getImageWidth();
+        $src_height = $src_image->getImageHeight();
+
+        self::trimImage($src_image);
+        $trim_width = $src_image->getImageWidth();
+        $trim_height = $src_image->getImageHeight();
+        if (!$dst_width) {
+            $dst_width = $trim_width;
+        }
+        if (!$dst_height) {
+            $dst_height = $trim_height;
+        }
+
+        $ps_image_generation_method = Configuration::get('PS_IMAGE_GENERATION_METHOD');
+        if ($ps_image_generation_method && ($trim_width > $dst_width || $trim_height > $dst_height)) {
+            if ($ps_image_generation_method == 2) {
+                $dst_width = (int)(round(($trim_width * $dst_height) / $trim_height));
             } else {
-                $src_image->setImageCompression(Imagick::COMPRESSION_JPEG);
-                if (Configuration::get(MDImageMagick::IMAGICK_PROGRESSIVE_JPEG)) {
-                    $src_image->setInterlaceScheme(Imagick::INTERLACE_PLANE);
-                } else {
-                    $src_image->setInterlaceScheme(Imagick::INTERLACE_LINE);
-                }
-                $src_image->setImageCompressionQuality((int)Configuration::get('PS_JPEG_QUALITY'));
-                $dest_type_file = $dst_file;
+                $dst_height = (int)(round(($trim_height * $dst_width) / $trim_width));
             }
+        }
 
-            if (Configuration::get(MDImageMagick::IMAGICK_TRIM_WHITESPACE)) {
-                $fuzz = (float)Configuration::get(MDImageMagick::IMAGICK_FUZZ, 0);
-                // From percentage to 0 - 1 float
-                $fuzz = $fuzz / 100.00000;
+        $tgt_width  = $dst_width;
+        $tgt_height = $dst_height;
 
-                // Calculate before dimensions and ratio
-                $before_width = (float)$src_image->getImageWidth();
-                $before_height = (float)$src_image->getImageHeight();
-                $ratio = (float)($before_width / $before_height);
+        return self::resize2($src_file, $dst_file, $src_image, $dst_width, $dst_height, $file_type, $force_type);
+    }
 
-                // Trim whitespace
-                $src_image->trimImage($fuzz);
+    private static function resize2($src_file, $dst_file, $src_image, $dst_width, $dst_height, $file_type = 'jpg', $force_type = false) {
+        // If PS_IMAGE_QUALITY is activated, the generated image will be a PNG with .jpg as a file extension.
+        // This allow for higher quality and for transparency. JPG source files will also benefit from a higher quality
+        // because JPG reencoding, even with max quality setting, degrades the image.
+        $type = $src_image->getImageFormat();
+        if (Configuration::get('PS_IMAGE_QUALITY') == 'png_all'
+            || (Configuration::get('PS_IMAGE_QUALITY') == 'png' && $type == 'PNG') && !$force_type) {
+            $file_type = 'png';
+        }
 
-                // Restore ratio
-                if ($ratio > 1) {
-                    $src_image->extentImage($before_width, $before_height, 0, -(($before_height - $src_image->getImageHeight()) / 2));
-                } else {
-                    $src_image->extentImage($before_width, $before_height, -(($before_width - $src_image->getImageWidth()) / 2), 0);
-                }
-            }
-
-            if (Configuration::get(MDImageMagick::IMAGICK_STRIP_ICC_PROFILE)) {
-                // Transform to sRGB
-                $src_image->transformImageColorspace(Imagick::COLORSPACE_SRGB);
-
-                // Strip ICC profiles, comments and exif data
-                $src_image->stripImage();
-
-                // Restore orientation
-                if ($rotate) {
-                    $src_image->rotateImage("#fff", $rotate);
-                }
-            }
-
-            Hook::exec(
-                'actionChangeImagickSettings',
-                array(
-                    'imagick' => &$src_image,
-                    'src_file' => $src_file,
-                    'dst_file' => $dst_file,
-                    'dst_width' => $dst_width,
-                    'dst_height' => $dst_height,
-                    'file_type' => $file_type,
-                )
-            );
-
-            // Do we even need to resize?
-            if ($dst_width < $src_image->getImageWidth() || $dst_height < $src_image->getImageHeight() || Configuration::get(MDImageMagick::IMAGICK_TRIM_WHITESPACE)) {
-                $src_image->resizeImage($dst_width, $dst_height, Configuration::get(MDImageMagick::IMAGICK_FILTER), Configuration::get(MDImageMagick::IMAGICK_BLUR), true);
-            }
-
-            // If the image dimensions differ from the target, add whitespace
-            // Begin with the height...
-            if ($dst_height > $src_image->getImageHeight()) {
-                $src_image->extentImage($src_image->getImageWidth(), $dst_height, 0, -(($dst_height - $src_image->getImageHeight()) / 2));
-            }
-            // ...and then the width, if necessary
-            if ($dst_width > $src_image->getImageWidth()) {
-                $src_image->extentImage($dst_width, $src_image->getImageHeight(), -(($dst_width - $src_image->getImageWidth()) / 2), 0);
-            }
-
-            $write_file = $src_image->writeImage($dest_type_file);
-            Hook::exec('actionOnImageResizeAfter', array('dst_file' => $dst_file, 'file_type' => $file_type));
-
-            return $write_file;
+        if ($file_type == 'png') {
+            // PNG is basically no more than lossless gzip
+            $src_image->setImageCompression(Imagick::COMPRESSION_LZW);
+            $src_image->setImageFormat('png');
+            $src_image->setImageCompressionQuality((int)Configuration::get('PS_PNG_QUALITY') * 10 + (int)Configuration::get(MDImageMagick::IMAGICK_PNG_DATA_ENCODING));
+            $dest_type_file = 'png:'.$dst_file;
         } else {
-            $tgt_width  = $dst_width;
-            $tgt_height = $dst_height;
-
-            $dest_image = imagecreatetruecolor($dst_width, $dst_height);
-
-            // If image is a PNG and the output is PNG, fill with transparency. Else fill with white background.
-            if ($file_type == 'png' && $type == IMAGETYPE_PNG) {
-                imagealphablending($dest_image, false);
-                imagesavealpha($dest_image, true);
-                $transparent = imagecolorallocatealpha($dest_image, 255, 255, 255, 127);
-                imagefilledrectangle($dest_image, 0, 0, $dst_width, $dst_height, $transparent);
+            $src_image->setImageCompression(Imagick::COMPRESSION_JPEG);
+            $src_image->setImageFormat('jpeg');
+            $src_image->setImageCompressionQuality((int)Configuration::get('PS_JPEG_QUALITY'));
+            if (Configuration::get(MDImageMagick::IMAGICK_PROGRESSIVE_JPEG)) {
+                $src_image->setInterlaceScheme(Imagick::INTERLACE_PLANE);
             } else {
-                $white = imagecolorallocate($dest_image, 255, 255, 255);
-                imagefilledrectangle($dest_image, 0, 0, $dst_width, $dst_height, $white);
+                $src_image->setInterlaceScheme(Imagick::INTERLACE_NO);
             }
+            $dest_type_file = 'jpeg:'.$dst_file;
+        }
 
-            $src_image = ImageManager::create($type, $src_file);
-            if ($rotate) {
-                $src_image = imagerotate($src_image, $rotate, 0);
-            }
+        // If image is a PNG and the output is PNG, fill with transparency. Else fill with white background.
+        if ($file_type == 'png' && $type == 'PNG') {
+            $src_image->setImageBackgroundColor('none');
+        } else {
+            $src_image->setImageBackgroundColor('white');
+        }
 
-            if ($dst_width >= $src_width && $dst_height >= $src_height) {
-                imagecopyresized($dest_image, $src_image, (int)(($dst_width - $next_width) / 2), (int)(($dst_height - $next_height) / 2), 0, 0, $next_width, $next_height, $src_width, $src_height);
-            } else {
-                ImageManager::imagecopyresampled($dest_image, $src_image, (int)(($dst_width - $next_width) / 2), (int)(($dst_height - $next_height) / 2), 0, 0, $next_width, $next_height, $src_width, $src_height, $quality);
+        Hook::exec(
+            'actionChangeImagickSettings',
+            array(
+                'imagick' => &$src_image,
+                'src_file' => $src_file,
+                'dst_file' => $dst_file,
+                'dst_width' => $dst_width,
+                'dst_height' => $dst_height,
+                'file_type' => $file_type,
+            )
+        );
+
+        $x = $src_image->getImageWidth();
+        $y = $src_image->getImageHeight();
+        // Do we even need to resize?
+        if ($x != $dst_width || $y != $dst_heigth) {
+            $src_image->resizeImage($dst_width, $dst_height, Configuration::get(MDImageMagick::IMAGICK_FILTER), (float)Configuration::get(MDImageMagick::IMAGICK_BLUR), true);
+            $x = $src_image->getImageWidth();
+            $y = $src_image->getImageHeight();
+            // If the image dimensions differ from the target, add whitespace
+            if ($x != $dst_width || $y != $dst_height) {
+                $src_image->extentImage($dst_width, $dst_height, ($x - $dst_width) / 2, ($y - $dst_height) / 2);
             }
-            $write_file = ImageManager::write($file_type, $dest_image, $dst_file);
-            Hook::exec('actionOnImageResizeAfter', array('dst_file' => $dst_file, 'file_type' => $file_type));
-            @imagedestroy($src_image);
-            return $write_file;
+        }
+
+        if (Configuration::get(MDImageMagick::IMAGICK_STRIP_ICC_PROFILE)) {
+            // Transform to sRGB
+            $src_image->transformImageColorspace(Imagick::COLORSPACE_SRGB);
+            // Strip ICC profiles, comments and exif data
+            $src_image->stripImage();
+        }
+
+        $write_file = $src_image->writeImage($dest_type_file);
+
+        Hook::exec('actionOnImageResizeAfter', array('dst_file' => $dst_file, 'file_type' => $file_type));
+
+        return $write_file;
+    }
+
+    private static function isModuleEnabled() {
+        if (!Module::isEnabled('mdimagemagick')) {
+            return false;
+        }
+        if (!class_exists('MDImageMagick')) {
+            require_once _PS_MODULE_DIR_.'mdimagemagick/mdimagemagick.php';
+        }
+        return true;
+    }
+
+    private static function isImagickEnabled() {
+        $imagick_enabled = (bool)Configuration::get(MDImageMagick::IMAGICK_ENABLED);
+        if ($imagick_enabled && !extension_loaded('imagick')) {
+            Db::getInstance()->update('configuration', array('name' => MDImageMagick::IMAGICK_ENABLED, 'value' => false), 'name = \''.MDImageMagick::IMAGICK_ENABLED.'\'');
+            $imagick_enabled = false;
+        }
+        return $imagick_enabled;
+    }
+
+    private static function statCacheClear($image) {
+        if (PHP_VERSION_ID < 50300) {
+            clearstatcache();
+        } else {
+            clearstatcache(true, $image);
+        }
+    }
+
+    private static function trimImage($src_image) {
+        if (Configuration::get(MDImageMagick::IMAGICK_TRIM_WHITESPACE)) {
+            $fuzz = (int)Configuration::get(MDImageMagick::IMAGICK_FUZZ, 0);
+            if ($fuzz) {
+                // From percentage to 0 - getQuantum
+                $fuzz = Imagick::getQuantum() / (100 / $fuzz);
+            }
+            // Trim whitespace
+            $src_image->trimImage($fuzz);
         }
     }
 }
