@@ -197,6 +197,7 @@ Nc21zjbOts83z7jQOdC60TzRvtI/0sHTRNPG1EnUy9VO1dHWVdbY11zX4Nhk2OjZbNnx2nba+9uA
         // If PS_IMAGE_QUALITY is activated, the generated image will be a PNG with .jpg as a file extension.
         // This allow for higher quality and for transparency. JPG source files will also benefit from a higher quality
         // because JPG reencoding, even with max quality setting, degrades the image.
+        /** @var Imagick $src_image $type */
         $type = $src_image->getImageFormat();
         if (Configuration::get('PS_IMAGE_QUALITY') == 'png_all'
             || (Configuration::get('PS_IMAGE_QUALITY') == 'png' && $type == 'PNG') && !$force_type) {
@@ -242,14 +243,14 @@ Nc21zjbOts83z7jQOdC60TzRvtI/0sHTRNPG1EnUy9VO1dHWVdbY11zX4Nhk2OjZbNnx2nba+9uA
 
         if (Configuration::get(MDImageMagick::IMAGICK_STRIP_ICC_PROFILE)) {
             $iccModel = $src_image->getImageProperty('icc:model');
-            $colorSpace = $src_image->getImageColorSpace();
+            $colorSpace = $src_image->getImageColorspace();
             if ($iccModel) {
                 // Contains an ICC profile, do profile conversion if not already sRGB
                 // c2 is Facebook's sRGB hack, treat it like sRGB
                 // But don't touch some incorrectly tagged images seen in real life
                 if (strpos($iccModel, 'sRGB') === false
                     && strpos($iccModel, 'c2') === false
-                    && !($colorSpace == imagick::COLORSPACE_SRGB && strpos($iccModel, 'SWOP') !== false)) {
+                    && !($colorSpace == Imagick::COLORSPACE_SRGB && strpos($iccModel, 'SWOP') !== false)) {
                     if (self::$srbgProfile == null) {
                         // Do once, cache result
                         self::$srbgProfile = base64_decode(self::$srbgProfileBase64);
@@ -261,7 +262,7 @@ Nc21zjbOts83z7jQOdC60TzRvtI/0sHTRNPG1EnUy9VO1dHWVdbY11zX4Nhk2OjZbNnx2nba+9uA
                 // Does not contain an ICC profile, do simplistic colorspace conversion if needed
                 // Should arguably try to guess the input ICC profile for stuff like untagged
                 // CMYK images, but the complexity gets overly high for all these fringe cases
-                if ($colorSpace != imagick::COLORSPACE_GRAY && $colorSpace != imagick::COLORSPACE_SRGB) {
+                if ($colorSpace != Imagick::COLORSPACE_GRAY && $colorSpace != Imagick::COLORSPACE_SRGB) {
                     // Transform to sRGB
                     $src_image->transformImageColorspace(Imagick::COLORSPACE_SRGB);
                 }
@@ -272,8 +273,9 @@ Nc21zjbOts83z7jQOdC60TzRvtI/0sHTRNPG1EnUy9VO1dHWVdbY11zX4Nhk2OjZbNnx2nba+9uA
 
         $x = $src_image->getImageWidth();
         $y = $src_image->getImageHeight();
+
         // Do we even need to resize?
-        if ($x != $dst_width || $y != $dst_heigth) {
+        if ($x != $dst_width || $y != $dst_height) {
             $src_image->resizeImage($dst_width, $dst_height, Configuration::get(MDImageMagick::IMAGICK_FILTER), (float)Configuration::get(MDImageMagick::IMAGICK_BLUR), true);
             $x = $src_image->getImageWidth();
             $y = $src_image->getImageHeight();
@@ -318,6 +320,7 @@ Nc21zjbOts83z7jQOdC60TzRvtI/0sHTRNPG1EnUy9VO1dHWVdbY11zX4Nhk2OjZbNnx2nba+9uA
     }
 
     private static function trimImage($src_image) {
+        /** @var Imagick $src_image */
         if (Configuration::get(MDImageMagick::IMAGICK_TRIM_WHITESPACE)) {
             $fuzz = (int)Configuration::get(MDImageMagick::IMAGICK_FUZZ, 0);
             if ($fuzz) {

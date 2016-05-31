@@ -17,7 +17,7 @@
  *  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
  */
 
-function upgrade_module_1_1_1($module)
+function upgrade_module_1_2_0($module)
 {
     /** @var MDImageMagick $module */
     $module->removeOverride('ImageManager');
