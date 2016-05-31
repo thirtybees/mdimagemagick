@@ -1,6 +1,6 @@
 <?php
 /**
- * 2016 Michael Dekker
+ * 2016 Michael Dekker and Robert Andersson
  *
  * NOTICE OF LICENSE
  *
@@ -13,12 +13,77 @@
  * to license@michaeldekker.com so we can send you a copy immediately.
  *
  *  @author    Michael Dekker <prestashop@michaeldekker.com>
+ *  @author    Robert Andersson <robert@manillusion.no>
  *  @copyright 2016 Michael Dekker
  *  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
  */
 
 class ImageManager extends ImageManagerCore
 {
+    // ArgyllCMS sRGB.icm
+    // See http://ninedegreesbelow.com/photography/srgb-profile-comparison.html
+    // Binary content
+    private static $srbgProfile = null;
+    // Base64 content
+    private static $srbgProfileBase64 = '
+AAAMjGFyZ2wCIAAAbW50clJHQiBYWVogB90ABwAfABMAEAAnYWNzcE1TRlQAAAAASUVDIHNSR0IA
+AAAAAAAAAAAAAAAAAPbWAAEAAAAA0y1hcmdsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAARZGVzYwAAAVAAAACZY3BydAAAAewAAABnZG1uZAAAAlQAAABwZG1k
+ZAAAAsQAAACIdGVjaAAAA0wAAAAMdnVlZAAAA1gAAABndmlldwAAA8AAAAAkbHVtaQAAA+QAAAAU
+bWVhcwAAA/gAAAAkd3RwdAAABBwAAAAUYmtwdAAABDAAAAAUclhZWgAABEQAAAAUZ1hZWgAABFgA
+AAAUYlhZWgAABGwAAAAUclRSQwAABIAAAAgMZ1RSQwAABIAAAAgMYlRSQwAABIAAAAgMZGVzYwAA
+AAAAAAA/c1JHQiBJRUM2MTk2Ni0yLjEgKEVxdWl2YWxlbnQgdG8gd3d3LnNyZ2IuY29tIDE5OTgg
+SFAgcHJvZmlsZSkAAAAAAAAAAAAAAD9zUkdCIElFQzYxOTY2LTIuMSAoRXF1aXZhbGVudCB0byB3
+d3cuc3JnYi5jb20gMTk5OCBIUCBwcm9maWxlKQAAAAAAAAAAdGV4dAAAAABDcmVhdGVkIGJ5IEdy
+YWVtZSBXLiBHaWxsLiBSZWxlYXNlZCBpbnRvIHRoZSBwdWJsaWMgZG9tYWluLiBObyBXYXJyYW50
+eSwgVXNlIGF0IHlvdXIgb3duIHJpc2suAABkZXNjAAAAAAAAABZJRUMgaHR0cDovL3d3dy5pZWMu
+Y2gAAAAAAAAAAAAAABZJRUMgaHR0cDovL3d3dy5pZWMuY2gAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAZGVzYwAAAAAAAAAuSUVDIDYxOTY2LTIuMSBEZWZhdWx0
+IFJHQiBjb2xvdXIgc3BhY2UgLSBzUkdCAAAAAAAAAAAAAAAuSUVDIDYxOTY2LTIuMSBEZWZhdWx0
+IFJHQiBjb2xvdXIgc3BhY2UgLSBzUkdCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHNpZyAAAAAAQ1JU
+IGRlc2MAAAAAAAAADUlFQzYxOTY2LTIuMQAAAAAAAAAAAAAADUlFQzYxOTY2LTIuMQAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAdmlldwAAAAAA
+E6R8ABRfMAAQzgIAA+2yAAQTCgADXGcAAAABWFlaIAAAAAAATAo9AFAAAABXHrhtZWFzAAAAAAAA
+AAEAAAAAAAAAAAAAAAAAAAAAAAACjwAAAAJYWVogAAAAAAAA81EAAQAAAAEWzFhZWiAAAAAAAAAA
+AAAAAAAAAAAAWFlaIAAAAAAAAG+gAAA49QAAA5BYWVogAAAAAAAAYpcAALeHAAAY2VhZWiAAAAAA
+AAAknwAAD4QAALbDY3VydgAAAAAAAAQAAAAABQAKAA8AFAAZAB4AIwAoAC0AMgA3ADsAQABFAEoA
+TwBUAFkAXgBjAGgAbQByAHcAfACBAIYAiwCQAJUAmgCfAKQAqQCuALIAtwC8AMEAxgDLANAA1QDb
+AOAA5QDrAPAA9gD7AQEBBwENARMBGQEfASUBKwEyATgBPgFFAUwBUgFZAWABZwFuAXUBfAGDAYsB
+kgGaAaEBqQGxAbkBwQHJAdEB2QHhAekB8gH6AgMCDAIUAh0CJgIvAjgCQQJLAlQCXQJnAnECegKE
+Ao4CmAKiAqwCtgLBAssC1QLgAusC9QMAAwsDFgMhAy0DOANDA08DWgNmA3IDfgOKA5YDogOuA7oD
+xwPTA+AD7AP5BAYEEwQgBC0EOwRIBFUEYwRxBH4EjASaBKgEtgTEBNME4QTwBP4FDQUcBSsFOgVJ
+BVgFZwV3BYYFlgWmBbUFxQXVBeUF9gYGBhYGJwY3BkgGWQZqBnsGjAadBq8GwAbRBuMG9QcHBxkH
+Kwc9B08HYQd0B4YHmQesB78H0gflB/gICwgfCDIIRghaCG4IggiWCKoIvgjSCOcI+wkQCSUJOglP
+CWQJeQmPCaQJugnPCeUJ+woRCicKPQpUCmoKgQqYCq4KxQrcCvMLCwsiCzkLUQtpC4ALmAuwC8gL
+4Qv5DBIMKgxDDFwMdQyODKcMwAzZDPMNDQ0mDUANWg10DY4NqQ3DDd4N+A4TDi4OSQ5kDn8Omw62
+DtIO7g8JDyUPQQ9eD3oPlg+zD88P7BAJECYQQxBhEH4QmxC5ENcQ9RETETERTxFtEYwRqhHJEegS
+BxImEkUSZBKEEqMSwxLjEwMTIxNDE2MTgxOkE8UT5RQGFCcUSRRqFIsUrRTOFPAVEhU0FVYVeBWb
+Fb0V4BYDFiYWSRZsFo8WshbWFvoXHRdBF2UXiReuF9IX9xgbGEAYZRiKGK8Y1Rj6GSAZRRlrGZEZ
+txndGgQaKhpRGncanhrFGuwbFBs7G2MbihuyG9ocAhwqHFIcexyjHMwc9R0eHUcdcB2ZHcMd7B4W
+HkAeah6UHr4e6R8THz4faR+UH78f6iAVIEEgbCCYIMQg8CEcIUghdSGhIc4h+yInIlUigiKvIt0j
+CiM4I2YjlCPCI/AkHyRNJHwkqyTaJQklOCVoJZclxyX3JicmVyaHJrcm6CcYJ0kneierJ9woDSg/
+KHEooijUKQYpOClrKZ0p0CoCKjUqaCqbKs8rAis2K2krnSvRLAUsOSxuLKIs1y0MLUEtdi2rLeEu
+Fi5MLoIuty7uLyQvWi+RL8cv/jA1MGwwpDDbMRIxSjGCMbox8jIqMmMymzLUMw0zRjN/M7gz8TQr
+NGU0njTYNRM1TTWHNcI1/TY3NnI2rjbpNyQ3YDecN9c4FDhQOIw4yDkFOUI5fzm8Ofk6Njp0OrI6
+7zstO2s7qjvoPCc8ZTykPOM9Ij1hPaE94D4gPmA+oD7gPyE/YT+iP+JAI0BkQKZA50EpQWpBrEHu
+QjBCckK1QvdDOkN9Q8BEA0RHRIpEzkUSRVVFmkXeRiJGZ0arRvBHNUd7R8BIBUhLSJFI10kdSWNJ
+qUnwSjdKfUrESwxLU0uaS+JMKkxyTLpNAk1KTZNN3E4lTm5Ot08AT0lPk0/dUCdQcVC7UQZRUFGb
+UeZSMVJ8UsdTE1NfU6pT9lRCVI9U21UoVXVVwlYPVlxWqVb3V0RXklfgWC9YfVjLWRpZaVm4Wgda
+VlqmWvVbRVuVW+VcNVyGXNZdJ114XcleGl5sXr1fD19hX7NgBWBXYKpg/GFPYaJh9WJJYpxi8GND
+Y5dj62RAZJRk6WU9ZZJl52Y9ZpJm6Gc9Z5Nn6Wg/aJZo7GlDaZpp8WpIap9q92tPa6dr/2xXbK9t
+CG1gbbluEm5rbsRvHm94b9FwK3CGcOBxOnGVcfByS3KmcwFzXXO4dBR0cHTMdSh1hXXhdj52m3b4
+d1Z3s3gReG54zHkqeYl553pGeqV7BHtje8J8IXyBfOF9QX2hfgF+Yn7CfyN/hH/lgEeAqIEKgWuB
+zYIwgpKC9INXg7qEHYSAhOOFR4Wrhg6GcobXhzuHn4gEiGmIzokziZmJ/opkisqLMIuWi/yMY4zK
+jTGNmI3/jmaOzo82j56QBpBukNaRP5GokhGSepLjk02TtpQglIqU9JVflcmWNJaflwqXdZfgmEyY
+uJkkmZCZ/JpomtWbQpuvnByciZz3nWSd0p5Anq6fHZ+Ln/qgaaDYoUehtqImopajBqN2o+akVqTH
+pTilqaYapoum/adup+CoUqjEqTepqaocqo+rAqt1q+msXKzQrUStuK4trqGvFq+LsACwdbDqsWCx
+1rJLssKzOLOutCW0nLUTtYq2AbZ5tvC3aLfguFm40blKucK6O7q1uy67p7whvJu9Fb2Pvgq+hL7/
+v3q/9cBwwOzBZ8Hjwl/C28NYw9TEUcTOxUvFyMZGxsPHQce/yD3IvMk6ybnKOMq3yzbLtsw1zLXN
+Nc21zjbOts83z7jQOdC60TzRvtI/0sHTRNPG1EnUy9VO1dHWVdbY11zX4Nhk2OjZbNnx2nba+9uA
+3AXcit0Q3ZbeHN6i3ynfr+A24L3hROHM4lPi2+Nj4+vkc+T85YTmDeaW5x/nqegy6LzpRunQ6lvq
+5etw6/vshu0R7ZzuKO6070DvzPBY8OXxcvH/8ozzGfOn9DT0wvVQ9d72bfb794r4Gfio+Tj5x/pX
++uf7d/wH/Jj9Kf26/kv+3P9t//8=';
+
     public static function thumbnail($image, $cache_image, $size, $image_type = 'jpg', $disable_cache = true, $regenerate = false)
     {
         if (!self::isModuleEnabled() || !self::isImagickEnabled()) {
@@ -175,6 +240,36 @@ class ImageManager extends ImageManagerCore
             )
         );
 
+        if (Configuration::get(MDImageMagick::IMAGICK_STRIP_ICC_PROFILE)) {
+            $iccModel = $src_image->getImageProperty('icc:model');
+            $colorSpace = $src_image->getImageColorSpace();
+            if ($iccModel) {
+                // Contains an ICC profile, do profile conversion if not already sRGB
+                // c2 is Facebook's sRGB hack, treat it like sRGB
+                // But don't touch some incorrectly tagged images seen in real life
+                if (strpos($iccModel, 'sRGB') === false
+                    && strpos($iccModel, 'c2') === false
+                    && !($colorSpace == imagick::COLORSPACE_SRGB && strpos($iccModel, 'SWOP') !== false)) {
+                    if (self::$srbgProfile == null) {
+                        // Do once, cache result
+                        self::$srbgProfile = base64_decode(self::$srbgProfileBase64);
+                    }
+                    // Transform to sRGB
+                    $src_image->profileImage('icc', self::$srbgProfile);
+                }
+            } else {
+                // Does not contain an ICC profile, do simplistic colorspace conversion if needed
+                // Should arguably try to guess the input ICC profile for stuff like untagged
+                // CMYK images, but the complexity gets overly high for all these fringe cases
+                if ($colorSpace != imagick::COLORSPACE_GRAY && $colorSpace != imagick::COLORSPACE_SRGB) {
+                    // Transform to sRGB
+                    $src_image->transformImageColorspace(Imagick::COLORSPACE_SRGB);
+                }
+            }
+            // Strip ICC profiles, comments and exif data
+            $src_image->stripImage();
+        }
+
         $x = $src_image->getImageWidth();
         $y = $src_image->getImageHeight();
         // Do we even need to resize?
@@ -186,13 +281,6 @@ class ImageManager extends ImageManagerCore
             if ($x != $dst_width || $y != $dst_height) {
                 $src_image->extentImage($dst_width, $dst_height, ($x - $dst_width) / 2, ($y - $dst_height) / 2);
             }
-        }
-
-        if (Configuration::get(MDImageMagick::IMAGICK_STRIP_ICC_PROFILE)) {
-            // Transform to sRGB
-            $src_image->transformImageColorspace(Imagick::COLORSPACE_SRGB);
-            // Strip ICC profiles, comments and exif data
-            $src_image->stripImage();
         }
 
         $write_file = $src_image->writeImage($dest_type_file);
