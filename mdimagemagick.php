@@ -47,7 +47,7 @@ class MDImageMagick extends Module
     {
         $this->name = 'mdimagemagick';
         $this->tab = 'administration';
-        $this->version = '1.2.0';
+        $this->version = '1.2.1';
         $this->author = 'Michael Dekker';
         $this->need_instance = 0;
 
