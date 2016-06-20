@@ -124,7 +124,7 @@ class MDImageMagick extends Module
             $output .= $this->displayError($error);
         }
         $output .= $this->postProcess();
-        
+
         $this->context->smarty->assign('module_dir', $this->_path);
 
         $output .= $this->context->smarty->fetch($this->local_path.'views/templates/admin/configure.tpl');

@@ -13,7 +13,7 @@ $ apt-get install php-imagick
 ```  
 (yes, that's without the `php7.0` prefix)
  
-Unfortunately, the version of ImageMagick that is bundled with Ubuntu is vulnerable: https://imagetragick.com/  
+Unfortunately, the version of ImageMagick that is bundled with Ubuntu (or any version below 7.0.2) is vulnerable: https://imagetragick.com/  
 In order to install a safe version on production, we will have to compile it from source.
 First, make sure you have the necessary tools to build:  
 ```shell
@@ -50,11 +50,14 @@ You will now have the latest version available. Don't forget to update from time
 - Profit!
 
 ## Compatibility
-This module has been tested with versions:
-- `1.6.1.0` - `1.6.1.5`
+This module has been tested with versions:  
+- `1.6.1.0` - `1.6.1.6`
 
-## Requirements
-- PHP imagick extension
+## Minimum requirements
+- PHP imagick extension 3.4.0
+- ImageMagick 7.0.2 (anything below is vulnerable and not supported!)
+- PHP 5.4
+- PrestaShop 1.6.1.0
 
 ## License
 Academic Free License 3.0
