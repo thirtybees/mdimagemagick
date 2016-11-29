@@ -50,8 +50,9 @@ You will now have the latest version available. Don't forget to update from time
 - Profit!
 
 ## Compatibility
-This module has been tested with versions:  
-- `1.6.1.0` - `1.6.1.6`
+PrestaShop `1.6.1.x`
+
+**PrestaShop 1.7 is not supported!!**
 
 ## Minimum requirements
 - PHP imagick extension 3.4.0
