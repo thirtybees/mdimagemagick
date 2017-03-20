@@ -1,11 +1,12 @@
 # ImageMagick ![ImageMagick](/logo.gif)
 ![ImageMagick](/logo.png)
 
-Add ImageMagick support to PrestaShop
+Add ImageMagick support to thirty bees
 
-##Installation
+##Installation  
+
 ###Installation on Ubuntu 14.04/16.04
-Make sure you use Ondřej Surý's PHP PPA (`apt-add-repository ppa:ondrej/php`). It's kept up to date and at the time of writing comes with PHP versions 5.5, 5.6 and 7.0.
+Make sure you use Ondřej Surý's PHP PPA (`apt-add-repository ppa:ondrej/php`). It's kept up to date and at the time of writing comes with PHP versions 5.5, 5.6, 7.0 and 7.1.
  
 To install the PHP extension, issue the command:  
 ```shell
@@ -50,15 +51,15 @@ You will now have the latest version available. Don't forget to update from time
 - Profit!
 
 ## Compatibility
-PrestaShop `1.6.1.x`
+thirty bees `1.0.x`
 
-**PrestaShop 1.7 is not supported!!**
+**PrestaShop is not supported!!**
 
 ## Minimum requirements
 - PHP imagick extension 3.4.0
 - ImageMagick 7.0.2 (anything below is vulnerable and not supported!)
-- PHP 5.4
-- PrestaShop 1.6.1.0
+- PHP 5.5
+- thirty bees 1.0.x
 
 ## License
 Academic Free License 3.0
