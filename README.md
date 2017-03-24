@@ -3,9 +3,9 @@
 
 Add ImageMagick support to thirty bees
 
-##Installation  
+## Installation  
 
-###Installation on Ubuntu 14.04/16.04
+### Installation on Ubuntu 14.04/16.04
 Make sure you use Ondřej Surý's PHP PPA (`apt-add-repository ppa:ondrej/php`). It's kept up to date and at the time of writing comes with PHP versions 5.5, 5.6, 7.0 and 7.1.
  
 To install the PHP extension, issue the command:  
@@ -44,7 +44,7 @@ $ make && sudo make install
  
 You will now have the latest version available. Don't forget to update from time to time.
  
-###Module installation
+### Module installation
 - Upload the module through FTP or your Back Office
 - Install the module
 - Check if there are any errors and correct them if necessary
