@@ -78,6 +78,7 @@ crashlytics-build.properties
 
 # Node.js
 node_modules/
+yarn.lock
 
 tests/_output/*
 vendor/
