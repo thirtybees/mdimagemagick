@@ -231,14 +231,14 @@ Nc21zjbOts83z7jQOdC60TzRvtI/0sHTRNPG1EnUy9VO1dHWVdbY11zX4Nhk2OjZbNnx2nba+9uA
 
         Hook::exec(
             'actionChangeImagickSettings',
-            array(
+            [
                 'imagick' => &$src_image,
                 'src_file' => $src_file,
                 'dst_file' => $dst_file,
                 'dst_width' => $dst_width,
                 'dst_height' => $dst_height,
                 'file_type' => $file_type,
-            )
+            ]
         );
 
         if (Configuration::get(MDImageMagick::IMAGICK_STRIP_ICC_PROFILE)) {
@@ -287,7 +287,7 @@ Nc21zjbOts83z7jQOdC60TzRvtI/0sHTRNPG1EnUy9VO1dHWVdbY11zX4Nhk2OjZbNnx2nba+9uA
 
         $write_file = $src_image->writeImage($dest_type_file);
 
-        Hook::exec('actionOnImageResizeAfter', array('dst_file' => $dst_file, 'file_type' => $file_type));
+        Hook::exec('actionOnImageResizeAfter', ['dst_file' => $dst_file, 'file_type' => $file_type]);
 
         return $write_file;
     }
@@ -305,7 +305,7 @@ Nc21zjbOts83z7jQOdC60TzRvtI/0sHTRNPG1EnUy9VO1dHWVdbY11zX4Nhk2OjZbNnx2nba+9uA
     private static function isImagickEnabled() {
         $imagick_enabled = (bool)Configuration::get(MDImageMagick::IMAGICK_ENABLED);
         if ($imagick_enabled && !extension_loaded('imagick')) {
-            Db::getInstance()->update('configuration', array('name' => MDImageMagick::IMAGICK_ENABLED, 'value' => false), 'name = \''.MDImageMagick::IMAGICK_ENABLED.'\'');
+            Db::getInstance()->update('configuration', ['name' => MDImageMagick::IMAGICK_ENABLED, 'value' => false], 'name = \''.MDImageMagick::IMAGICK_ENABLED.'\'');
             $imagick_enabled = false;
         }
         return $imagick_enabled;

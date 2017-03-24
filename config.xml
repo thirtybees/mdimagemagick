@@ -3,8 +3,8 @@
 	<name>mdimagemagick</name>
 	<displayName><![CDATA[ImageMagick]]></displayName>
 	<version><![CDATA[1.2.1]]></version>
-	<description><![CDATA[Add ImageMagick support to PrestaShop]]></description>
-	<author><![CDATA[Michael Dekker]]></author>
+	<description><![CDATA[Add ImageMagick support to thirty bees]]></description>
+	<author><![CDATA[Michael Dekker & Robert Andersson]]></author>
 	<tab><![CDATA[administration]]></tab>
 	<is_configurable>1</is_configurable>
 	<need_instance>1</need_instance>
