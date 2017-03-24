@@ -1,6 +1,6 @@
 <?php
 /**
- * 2016 Michael Dekker
+ * 2016-2017 Michael Dekker and Robert Andersson
  *
  * NOTICE OF LICENSE
  *
@@ -10,11 +10,12 @@
  * http://opensource.org/licenses/afl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@michaeldekker.com so we can send you a copy immediately.
+ * to license@thirtybees.com so we can send you a copy immediately.
  *
- * @author    Michael Dekker <prestashop@michaeldekker.com>
- * @copyright 2016 Michael Dekker
- * @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+ *  @author    Michael Dekker <michael@thirtybees.com>
+ *  @author    Robert Andersson <robert@manillusion.no>
+ *  @copyright 2016-2017 Michael Dekker
+ *  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
  */
 
 if (!defined('_TB_VERSION_')) {
@@ -56,9 +57,6 @@ class MDImageMagick extends Module
         $this->author = 'Michael Dekker & Robert Andersson';
         $this->need_instance = 0;
 
-        /**
-         * Set $this->bootstrap to true if your module is compliant with bootstrap (PrestaShop 1.6)
-         */
         $this->bootstrap = true;
 
         parent::__construct();
@@ -631,7 +629,7 @@ class MDImageMagick extends Module
                     ],
                     self::ORIGINAL_COPY             => [
                         'title'      => $this->l('Original copy'),
-                        'desc'       => $this->l('Keep the original copy on the server. By default PrestaShop encodes the image immediately after uploading and twice when resizing. By enabling this option, encoding right after the upload will be disabled.'),
+                        'desc'       => $this->l('Keep the original copy on the server. By default thirty bees encodes the image immediately after uploading and twice when resizing. By enabling this option, encoding right after the upload will be disabled.'),
                         'type'       => 'bool',
                         'name'       => self::ORIGINAL_COPY,
                         'value'      => Configuration::get(self::ORIGINAL_COPY),
@@ -657,10 +655,10 @@ class MDImageMagick extends Module
         $idLang = Context::getContext()->language->id;
         $output = [];
         if (Configuration::get('PS_DISABLE_NON_NATIVE_MODULE')) {
-            $output[] = $this->l('Non native modules such as this one are disabled. Go to').' "'.$this->getTabName('AdminParentPreferences', $idLang).' > '.$this->getTabName('AdminPerformance', $idLang).'" '.$this->l('and make sure that the option').' "'.Translate::getAdminTranslation('Disable non PrestaShop modules', 'AdminPerformance').'" '.$this->l('is set to').' "'.Translate::getAdminTranslation('No', 'AdminPerformance').'"'.$this->l('.').'<br />';
+            $output[] = $this->l('Non native modules such as this one are disabled. Go to').' "'.$this->getTabName('AdminParentPreferences', $idLang).' > '.$this->getTabName('AdminPerformance', $idLang).'" '.$this->l('and make sure that the option').' "'.Translate::getAdminTranslation('Disable non thirty bees modules', 'AdminPerformance').'" '.$this->l('is set to').' "'.Translate::getAdminTranslation('No', 'AdminPerformance').'"'.$this->l('.').'<br />';
         }
         if (Configuration::get('PS_DISABLE_OVERRIDES')) {
-            $output[] = $this->l('Overrides are disabled. Go to').' "'.$this->getTabName('AdminParentPreferences', $idLang).' > '.$this->getTabName('AdminPerformance', $idLang).'" '.$this->l('and make sure that the option').' "'.Translate::getAdminTranslation('Disable non PrestaShop modules', 'AdminPerformance').'" '.$this->l('is set to').' "'.Translate::getAdminTranslation('No', 'AdminPerformance').'"'.$this->l('.').'<br />';
+            $output[] = $this->l('Overrides are disabled. Go to').' "'.$this->getTabName('AdminParentPreferences', $idLang).' > '.$this->getTabName('AdminPerformance', $idLang).'" '.$this->l('and make sure that the option').' "'.Translate::getAdminTranslation('Disable non thirty bees modules', 'AdminPerformance').'" '.$this->l('is set to').' "'.Translate::getAdminTranslation('No', 'AdminPerformance').'"'.$this->l('.').'<br />';
         }
 
         return $output;
