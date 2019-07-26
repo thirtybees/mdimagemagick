@@ -64,7 +64,8 @@ class MDImageMagick extends Module
         $this->displayName = $this->l('ImageMagick');
         $this->description = $this->l('Add ImageMagick support to thirty bees');
 
-        $this->tb_versions_compliancy = '^1.0.0';
+        $this->tb_min_version = '1.0.0';
+        $this->tb_versions_compliancy = '>= 1.0.0';
     }
 
     /**
